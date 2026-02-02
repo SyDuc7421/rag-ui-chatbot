@@ -1,0 +1,24 @@
+{
+    "Index": {
+        "title": "RAG Chatbot",
+        "welcome": "Welcome to your AI Assistant"
+    },
+    "Sidebar": {
+        "newChat": "New Chat",
+        "settings": "Settings",
+        "deleteConfirm": "Are you sure you want to delete this conversation?"
+    },
+    "Chat": {
+        "placeholder": "Type a message...",
+        "send": "Send",
+        "upload": "Upload file",
+        "aiName": "AI Assistant",
+        "userName": "You",
+        "emptyState": "Start chatting..."
+    },
+    "Documents": {
+        "title": "Documents",
+        "clickUpload": "Click to upload",
+        "formats": "PDF, TXT, DOCX"
+    }
+}
