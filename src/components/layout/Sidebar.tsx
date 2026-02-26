@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Plus, MessageSquare, Settings, Pencil, Trash2, Check, X } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, MessageSquare, Settings, Pencil, Trash2 } from 'lucide-react';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -11,8 +11,11 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Divider from '@mui/material/Divider';
-import Typography from '@mui/material/Typography';
-import { useTheme } from '@mui/material/styles';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
 import { useConversationStore } from '@/lib/store';
 import { useTranslations } from 'next-intl';
 
@@ -30,16 +33,9 @@ export function Sidebar() {
         renameConversation
     } = useConversationStore();
 
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editTitle, setEditTitle] = useState('');
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    // Focus input when editing starts
-    useEffect(() => {
-        if (editingId && inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, [editingId]);
+    const [renamingId, setRenamingId] = useState<string | null>(null);
+    const [renameTitle, setRenameTitle] = useState('');
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const handleCreate = () => {
         createConversation();
@@ -47,32 +43,27 @@ export function Sidebar() {
 
     const handleStartRename = (id: string, currentTitle: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        setEditingId(id);
-        setEditTitle(currentTitle);
+        setRenamingId(id);
+        setRenameTitle(currentTitle);
     };
 
     const handleSaveRename = () => {
-        if (editingId && editTitle.trim()) {
-            renameConversation(editingId, editTitle.trim());
-            setEditingId(null);
-        } else {
-            setEditingId(null);
+        if (renamingId && renameTitle.trim()) {
+            renameConversation(renamingId, renameTitle.trim());
         }
+        setRenamingId(null);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            handleSaveRename();
-        } else if (e.key === 'Escape') {
-            setEditingId(null);
-        }
-    };
-
-    const handleDelete = (id: string, e: React.MouseEvent) => {
+    const handleStartDelete = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm(t('deleteConfirm'))) {
-            deleteConversation(id);
+        setDeletingId(id);
+    };
+
+    const handleConfirmDelete = () => {
+        if (deletingId) {
+            deleteConversation(deletingId);
         }
+        setDeletingId(null);
     };
 
     return (
@@ -109,62 +100,45 @@ export function Sidebar() {
                             key={conv.id}
                             disablePadding
                             secondaryAction={
-                                editingId !== conv.id && (
-                                    <Box sx={{ display: 'none', gap: 0.5 }} className="actions">
-                                        <IconButton size="small" onClick={(e) => handleStartRename(conv.id, conv.title, e)}>
-                                            <Pencil size={14} />
-                                        </IconButton>
-                                        <IconButton size="small" onClick={(e) => handleDelete(conv.id, e)} color="error">
-                                            <Trash2 size={14} />
-                                        </IconButton>
-                                    </Box>
-                                )
+                                <Box sx={{ display: 'none', gap: 0.5 }} className="actions">
+                                    <IconButton size="small" onClick={(e) => handleStartRename(conv.id, conv.title, e)}>
+                                        <Pencil size={14} />
+                                    </IconButton>
+                                    <IconButton size="small" onClick={(e) => handleStartDelete(conv.id, e)} color="error">
+                                        <Trash2 size={14} />
+                                    </IconButton>
+                                </Box>
                             }
                             sx={{
                                 mb: 0.5,
                                 '&:hover .actions': { display: 'flex' }
                             }}
                         >
-                            {editingId === conv.id ? (
-                                <TextField
-                                    fullWidth
-                                    inputRef={inputRef}
-                                    value={editTitle}
-                                    onChange={(e) => setEditTitle(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    onBlur={handleSaveRename}
-                                    onClick={(e) => e.stopPropagation()}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ mx: 1 }}
-                                />
-                            ) : (
-                                <ListItemButton
-                                    selected={currentConversationId === conv.id}
-                                    onClick={() => setCurrentConversation(conv.id)}
-                                    sx={{
-                                        borderRadius: 1,
-                                        '&.Mui-selected': {
-                                            bgcolor: 'primary.light',
-                                            color: 'primary.main',
-                                            '&:hover': { bgcolor: 'primary.light' },
-                                            '& .MuiListItemIcon-root': { color: 'primary.main' }
-                                        }
+                            <ListItemButton
+                                selected={currentConversationId === conv.id}
+                                onClick={() => setCurrentConversation(conv.id)}
+                                sx={{
+                                    borderRadius: 1,
+                                    '&.Mui-selected': {
+                                        bgcolor: 'action.selected',
+                                        color: 'text.primary',
+                                        '&:hover': { bgcolor: 'action.selected' },
+                                        '& .MuiListItemIcon-root': { color: 'text.primary' }
+                                    }
+                                }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', mr: 1.5, color: 'text.secondary' }}>
+                                    <MessageSquare size={18} />
+                                </Box>
+                                <ListItemText
+                                    primary={conv.title}
+                                    primaryTypographyProps={{
+                                        noWrap: true,
+                                        variant: 'body2',
+                                        fontWeight: currentConversationId === conv.id ? 600 : 400
                                     }}
-                                >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mr: 1.5, color: 'text.secondary' }}>
-                                        <MessageSquare size={18} />
-                                    </Box>
-                                    <ListItemText
-                                        primary={conv.title}
-                                        primaryTypographyProps={{
-                                            noWrap: true,
-                                            variant: 'body2',
-                                            fontWeight: currentConversationId === conv.id ? 600 : 400
-                                        }}
-                                    />
-                                </ListItemButton>
-                            )}
+                                />
+                            </ListItemButton>
                         </ListItem>
                     ))}
                 </List>
@@ -185,6 +159,46 @@ export function Sidebar() {
                     {t('settings')}
                 </Button>
             </Box>
+
+            {/* Rename Dialog */}
+            <Dialog open={!!renamingId} onClose={() => setRenamingId(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>{t('renameChat')}</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        fullWidth
+                        value={renameTitle}
+                        onChange={(e) => setRenameTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveRename();
+                            }
+                        }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setRenamingId(null)}>{t('cancel')}</Button>
+                    <Button onClick={handleSaveRename} variant="contained">{t('save')}</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Delete Dialog */}
+            <Dialog open={!!deletingId} onClose={() => setDeletingId(null)}>
+                <DialogTitle>{t('deleteChat')}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {t('deleteConfirm')}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeletingId(null)}>{t('cancel')}</Button>
+                    <Button onClick={handleConfirmDelete} color="error" variant="contained">
+                        {t('delete')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

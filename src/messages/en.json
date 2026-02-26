@@ -6,7 +6,12 @@
     "Sidebar": {
         "newChat": "New Chat",
         "settings": "Settings",
-        "deleteConfirm": "Are you sure you want to delete this conversation?"
+        "deleteConfirm": "Are you sure you want to delete this conversation?",
+        "renameChat": "Rename Chat",
+        "deleteChat": "Delete Chat",
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete"
     },
     "Chat": {
         "placeholder": "Type a message...",

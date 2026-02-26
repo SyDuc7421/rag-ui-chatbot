@@ -11,7 +11,7 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
-import { useConversationStore } from '@/lib/store';
+import { useConversationStore, useDocumentStore } from '@/lib/store';
 import { useTranslations } from 'next-intl';
 
 export function ChatInterface() {
@@ -27,6 +27,9 @@ export function ChatInterface() {
 
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const { uploadDocument } = useDocumentStore();
 
     const currentConversation = conversations.find(c => c.id === currentConversationId);
     const messages = currentConversation?.messages || [];
@@ -63,6 +66,40 @@ export function ChatInterface() {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
+        }
+    };
+
+    const handleUploadClick = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                // basic validation
+                if (
+                    file.type === 'application/pdf' ||
+                    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                    file.name.endsWith('.pdf') ||
+                    file.name.endsWith('.docx')
+                ) {
+                    uploadDocument({
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                    });
+                } else {
+                    alert('Only PDF and DOCX files are allowed.');
+                }
+            }
+            // Reset input
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         }
     };
 
@@ -146,7 +183,16 @@ export function ChatInterface() {
                         borderColor: 'divider'
                     }}
                 >
-                    <IconButton sx={{ mb: 0.5 }} aria-label={t('upload')}>
+                    <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                    />
+
+                    <IconButton sx={{ mb: 0.5 }} aria-label={t('upload')} onClick={handleUploadClick}>
                         <Paperclip size={20} />
                     </IconButton>
 

@@ -8,6 +8,15 @@ export type Message = {
     createdAt: number;
 };
 
+export type Document = {
+    id: string;
+    name: string;
+    size: number; // in bytes
+    type: string; // 'application/pdf' or 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    url?: string;
+    uploadedAt: number;
+};
+
 export type Conversation = {
     id: string;
     title: string;
@@ -115,4 +124,31 @@ export const useConversationStore = create<ConversationStore>((set, _get) => ({
             }),
         }));
     },
+}));
+
+interface DocumentStore {
+    documents: Document[];
+    uploadDocument: (doc: Omit<Document, 'id' | 'uploadedAt'>) => void;
+    deleteDocument: (id: string) => void;
+}
+
+export const useDocumentStore = create<DocumentStore>((set) => ({
+    documents: [],
+
+    uploadDocument: (doc) => {
+        const newDoc: Document = {
+            id: uuidv4(),
+            uploadedAt: Date.now(),
+            ...doc,
+        };
+        set((state) => ({
+            documents: [newDoc, ...state.documents],
+        }));
+    },
+
+    deleteDocument: (id) => {
+        set((state) => ({
+            documents: state.documents.filter((d) => d.id !== id),
+        }));
+    }
 }));
